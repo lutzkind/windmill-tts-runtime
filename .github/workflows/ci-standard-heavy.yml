@@ -25,22 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          if [ -f Dockerfile ]; then
-            docker build --pull=false --tag ci-standard-${GITHUB_SHA} .
-          else
-            compose_file=""
-            for candidate in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
-              if [ -f "$candidate" ]; then
-                compose_file="$candidate"
-                break
-              fi
-            done
-            if [ -n "$compose_file" ]; then
-              docker compose -f "$compose_file" config --quiet
-            else
-              echo 'Heavy profile requires repository-specific disposable-service checks.'
-            fi
-          fi
+          if [ -f Dockerfile ]; then docker build --pull=false --tag ci-standard-${GITHUB_SHA} .; elif [ -f docker-compose.yml ] || [ -f compose.yml ]; then docker compose config; else echo 'Heavy profile requires repository-specific disposable-service checks.'; fi
       - name: Clean disposable resources
         if: always()
         shell: bash
@@ -48,3 +33,4 @@ jobs:
           set +e
           docker compose down --volumes --remove-orphans 2>/dev/null || true
           docker system prune -af --volumes 2>/dev/null || true
+
